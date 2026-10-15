@@ -3,4 +3,5 @@ java { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaV
 dependencies {
     api project(':engine')
     api 'com.badlogicgames.gdx:gdx:1.12.1'
+    api 'com.badlogicgames.gdx:gdx-freetype:1.12.1'
 }
