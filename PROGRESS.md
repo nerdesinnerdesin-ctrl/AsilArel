@@ -20,5 +20,9 @@
 - [~] Siyah deri çerçeve, orta çubuk, yan tepsiler, süet yüzey, zeytin/kahve üçgenler, hafif perspektif, kalın pullar, zarlar oyuncunun yarısına atılıyor
 - [ ] Zar bardakları (fotoğrafta var), çarpan zarı, pul rengi seçeneği (kırmızı/siyah) yok
 
+## Aşama 4c — görsel kalite turu — yazıldı, **derlenmedi/telefonda denenmedi**
+- [~] 5'erli pul sırası + üst üste katmanlar (gerçek tahtadaki gibi), sedefli krem ve parlak siyah pul (malzeme önizlemesi Python'da kontrol edildi), ince süet + tane + vinyet ışığı, çerçeve derinliği/dikiş/orta çubuk gölgesi
+- [ ] Gerçek cihaz görüntüsü doğrulanmadı; zar bardakları, çarpan zarı, ahşap kenar detayları yok
+
 ## Yapılmadı
 Premium görsel tasarım, menüler/profil ekranı, bilgisayara karşı mod yok, çevrim içi oda/eşleştirme, hesap/liderlik, AdMob, imzalama talimatları, BUILD_REPORT'ta gerçek derleme sonucu.

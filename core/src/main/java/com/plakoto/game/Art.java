@@ -22,45 +22,91 @@ final class Art {
     }
     private static float clamp(float v) { return v < 0 ? 0 : (v > 1 ? 1 : v); }
 
-    /** Seamless-ish wood grain, horizontal rings. dark/light are RGB triples. */
-    static Texture wood(int w, int h, float[] dark, float[] light, int seed) {
-        Pixmap pm = new Pixmap(w, h, Pixmap.Format.RGBA8888);
-        for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) {
-            float warp = vnoise(x * 0.006f, y * 0.04f, seed) * 6f;
-            float ring = 0.5f + 0.5f * (float) Math.sin((y * 0.05f + warp) * 6.2832f * 0.6f);
-            float fine = vnoise(x * 0.35f, y * 0.9f, seed + 7);
-            float streak = vnoise(x * 0.02f, y * 0.5f, seed + 3);
-            float t = clamp(ring * 0.55f + fine * 0.18f + streak * 0.27f);
-            pm.setColor(dark[0] + (light[0] - dark[0]) * t, dark[1] + (light[1] - dark[1]) * t, dark[2] + (light[2] - dark[2]) * t, 1f);
-            pm.drawPixel(x, y);
-        }
+    private static Texture finish(Pixmap pm) {
         Texture t = new Texture(pm); pm.dispose();
         t.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
         return t;
     }
 
-    /** Beveled, lit checker disc with groove ring and specular highlight. */
-    static Texture checker(float r, float g, float b) {
-        int n = 160; float c = n / 2f, R = c - 3;
+    /** Fine-grained tan suede (no blotchy low-frequency noise). */
+    static Texture felt(int w, int h, int seed) {
+        Pixmap pm = new Pixmap(w, h, Pixmap.Format.RGBA8888);
+        for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) {
+            float n = vnoise(x * 1.1f, y * 1.1f, seed) * 0.6f + vnoise(x * 0.45f, y * 0.45f, seed + 4) * 0.4f;
+            float k = 0.93f + 0.10f * n;
+            pm.setColor(clamp(0.83f * k), clamp(0.73f * k), clamp(0.47f * k), 1f);
+            pm.drawPixel(x, y);
+        }
+        return finish(pm);
+    }
+
+    /** Black leather with fine grain. */
+    static Texture leather(int w, int h, int seed, float base) {
+        Pixmap pm = new Pixmap(w, h, Pixmap.Format.RGBA8888);
+        for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) {
+            float grain = vnoise(x * 0.55f, y * 0.55f, seed) * 0.6f + vnoise(x * 0.12f, y * 0.12f, seed + 9) * 0.4f;
+            float k = base * (0.75f + 0.5f * grain);
+            pm.setColor(clamp(k), clamp(k), clamp(k * 1.05f), 1f);
+            pm.drawPixel(x, y);
+        }
+        return finish(pm);
+    }
+
+    /** Neutral specks (white/black, low alpha) laid over the field so triangles share the suede texture. */
+    static Texture grain(int w, int h, int seed) {
+        Pixmap pm = new Pixmap(w, h, Pixmap.Format.RGBA8888);
+        for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) {
+            float n = hash(x, y, seed), e = Math.abs(n - 0.5f) * 2f;
+            float v = n > 0.5f ? 1f : 0f;
+            pm.setColor(v, v, v, e * e * 0.16f);
+            pm.drawPixel(x, y);
+        }
+        return finish(pm);
+    }
+
+    /** Dark edges + slightly darker bottom-right: gives directional light from the top-left. */
+    static Texture vignette() {
+        int n = 256; Pixmap pm = new Pixmap(n, n, Pixmap.Format.RGBA8888);
+        for (int y = 0; y < n; y++) for (int x = 0; x < n; x++) {
+            float nx = x / (n - 1f) * 2 - 1, ny = 1 - y / (n - 1f) * 2; // y up
+            float edge = (float) Math.pow(Math.max(Math.abs(nx), Math.abs(ny)), 3.0);
+            float a = clamp(edge * 0.50f + 0.07f * (nx - ny) * 0.5f + 0.05f);
+            pm.setColor(0, 0, 0, a); pm.drawPixel(x, y);
+        }
+        Texture t = finish(pm);
+        t.setWrap(Texture.TextureWrap.ClampToEdge, Texture.TextureWrap.ClampToEdge);
+        return t;
+    }
+
+    /**
+     * Lit, beveled tavla checker: outer bevel, two concentric grooves, slightly raised centre,
+     * material noise (marbling for ivory) and a glossy highlight + rim light.
+     */
+    static Texture checker(float r, float g, float b, float gloss, float marble, int seed) {
+        int n = 192; float c = n / 2f, R = c - 3;
         Pixmap pm = new Pixmap(n, n, Pixmap.Format.RGBA8888);
         for (int y = 0; y < n; y++) for (int x = 0; x < n; x++) {
             float dx = x - c, dy = y - c, d = (float) Math.sqrt(dx * dx + dy * dy) / R;
             if (d > 1f) { pm.setColor(0, 0, 0, 0); pm.drawPixel(x, y); continue; }
-            float nx = dx / R, ny = -dy / R; // y up
-            float light = 0.78f + 0.30f * (-nx * 0.5f + ny * 0.7f); // light from top-left
+            float nx = dx / R, ny = -dy / R;
+            float lit = -nx * 0.5f + ny * 0.7f;
+            float light = 0.90f + 0.28f * lit;
             float shade;
-            if (d > 0.86f) { float e = (d - 0.86f) / 0.14f; shade = light * (1.1f - 0.6f * e) ; }       // outer bevel
-            else if (d > 0.60f && d < 0.66f) shade = light * 0.72f;                                      // groove
-            else shade = light * (1.0f - 0.10f * d);                                                    // face
-            float spec = (float) Math.max(0, 1 - Math.hypot(nx + 0.38f, ny - 0.42f) / 0.38f);
-            spec = spec * spec * 0.55f;
+            if (d > 0.88f) { float e = (d - 0.88f) / 0.12f; shade = light * (1.06f - 0.55f * e); }
+            else if (Math.abs(d - 0.74f) < 0.022f) shade = light * 0.88f;
+            else if (Math.abs(d - 0.50f) < 0.018f) shade = light * 0.93f;
+            else shade = light * (1.0f - 0.06f * d + (d < 0.45f ? 0.04f : 0f));
+            float veins = (vnoise(x * 0.07f, y * 0.07f, seed) - 0.5f) * 2f * marble;
+            float fine = (vnoise(x * 0.8f, y * 0.8f, seed + 3) - 0.5f) * 0.05f;
+            shade *= 1f + veins * 0.10f + fine;
+            float spec = (float) Math.max(0, 1 - Math.hypot(nx + 0.36f, ny - 0.40f) / 0.40f);
+            spec = spec * spec * 0.60f * gloss;
+            float rim = (d > 0.90f && d < 0.97f && lit > 0) ? lit * 0.22f * gloss : 0f;
             float a = d > 0.97f ? (1f - d) / 0.03f : 1f;
-            pm.setColor(clamp(r * shade + spec), clamp(g * shade + spec), clamp(b * shade + spec), a);
+            pm.setColor(clamp(r * shade + spec + rim), clamp(g * shade + spec + rim), clamp(b * shade + spec + rim), a);
             pm.drawPixel(x, y);
         }
-        Texture t = new Texture(pm); pm.dispose();
-        t.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
-        return t;
+        return finish(pm);
     }
 
     static Texture shadow() {
@@ -102,34 +148,6 @@ final class Art {
                 pm.setColor(s, s, s * 1.05f, d > 0.92f ? (1f - d) / 0.08f : 1f);
                 pm.drawPixel(x, y);
             }
-        }
-        Texture t = new Texture(pm); pm.dispose();
-        t.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
-        return t;
-    }
-
-    /** Tan suede/felt playing surface. */
-    static Texture felt(int w, int h, int seed) {
-        Pixmap pm = new Pixmap(w, h, Pixmap.Format.RGBA8888);
-        for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) {
-            float n = vnoise(x * 0.9f, y * 0.9f, seed) * 0.5f + vnoise(x * 0.07f, y * 0.07f, seed + 5) * 0.5f;
-            float k = 0.90f + 0.16f * n;
-            pm.setColor(clamp(0.80f * k), clamp(0.70f * k), clamp(0.44f * k), 1f);
-            pm.drawPixel(x, y);
-        }
-        Texture t = new Texture(pm); pm.dispose();
-        t.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
-        return t;
-    }
-
-    /** Black leather with fine grain and slight sheen. */
-    static Texture leather(int w, int h, int seed, float base) {
-        Pixmap pm = new Pixmap(w, h, Pixmap.Format.RGBA8888);
-        for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) {
-            float grain = vnoise(x * 0.55f, y * 0.55f, seed) * 0.6f + vnoise(x * 0.12f, y * 0.12f, seed + 9) * 0.4f;
-            float k = base * (0.75f + 0.5f * grain);
-            pm.setColor(clamp(k), clamp(k), clamp(k * 1.05f), 1f);
-            pm.drawPixel(x, y);
         }
         Texture t = new Texture(pm); pm.dispose();
         t.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
