@@ -16,5 +16,9 @@
 - [~] Prosedürel ceviz dokusu (çerçeve + tahta), gölgeli/bevelli/parlak pullar, ışıklı zar yüzleri, zar yuvarlanma animasyonu, pul hareket animasyonu (yay çizerek), Türkçe karakterli yazı tipi (DejaVu Sans Bold + gdx-freetype)
 - [ ] Menüler/profil/sonuç ekranı, bilgisayara karşı mod hâlâ yok
 
+## Aşama 4b — gerçek tavla masası stili (kullanıcı fotoğrafına göre) — yazıldı, **derlenmedi/denenmedi**
+- [~] Siyah deri çerçeve, orta çubuk, yan tepsiler, süet yüzey, zeytin/kahve üçgenler, hafif perspektif, kalın pullar, zarlar oyuncunun yarısına atılıyor
+- [ ] Zar bardakları (fotoğrafta var), çarpan zarı, pul rengi seçeneği (kırmızı/siyah) yok
+
 ## Yapılmadı
 Premium görsel tasarım, menüler/profil ekranı, bilgisayara karşı mod yok, çevrim içi oda/eşleştirme, hesap/liderlik, AdMob, imzalama talimatları, BUILD_REPORT'ta gerçek derleme sonucu.

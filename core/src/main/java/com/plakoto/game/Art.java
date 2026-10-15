@@ -107,4 +107,32 @@ final class Art {
         t.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
         return t;
     }
+
+    /** Tan suede/felt playing surface. */
+    static Texture felt(int w, int h, int seed) {
+        Pixmap pm = new Pixmap(w, h, Pixmap.Format.RGBA8888);
+        for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) {
+            float n = vnoise(x * 0.9f, y * 0.9f, seed) * 0.5f + vnoise(x * 0.07f, y * 0.07f, seed + 5) * 0.5f;
+            float k = 0.90f + 0.16f * n;
+            pm.setColor(clamp(0.80f * k), clamp(0.70f * k), clamp(0.44f * k), 1f);
+            pm.drawPixel(x, y);
+        }
+        Texture t = new Texture(pm); pm.dispose();
+        t.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        return t;
+    }
+
+    /** Black leather with fine grain and slight sheen. */
+    static Texture leather(int w, int h, int seed, float base) {
+        Pixmap pm = new Pixmap(w, h, Pixmap.Format.RGBA8888);
+        for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) {
+            float grain = vnoise(x * 0.55f, y * 0.55f, seed) * 0.6f + vnoise(x * 0.12f, y * 0.12f, seed + 9) * 0.4f;
+            float k = base * (0.75f + 0.5f * grain);
+            pm.setColor(clamp(k), clamp(k), clamp(k * 1.05f), 1f);
+            pm.drawPixel(x, y);
+        }
+        Texture t = new Texture(pm); pm.dispose();
+        t.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        return t;
+    }
 }
